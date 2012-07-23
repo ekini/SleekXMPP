@@ -76,14 +76,19 @@ class ZlibSocket(object):
         return getattr(self.__socket, name)
 
     def send(self, data):
+        sentlen = len(data)
         data = self.compressor.compress(data)
         data += self.compressor.flush(zlib.Z_SYNC_FLUSH)
-        log.debug(b'>>> ' + data.encode("hex"))
-        return self.__socket.send(data)
+        log.debug(b'>>> (compressed)' + (data.encode("hex")))
+        #return self.__socket.send(data)
+        sentactuallen = self.__socket.send(data)
+        assert(sentactuallen == len(data))
+
+        return sentlen
 
     def recv(self, *args, **kwargs):
         data = self.__socket.recv(*args, **kwargs)
-        log.debug(b'<<< ' + data.encode("hex"))
+        log.debug(b'<<< (compressed)' + data.encode("hex"))
         return self.decompressor.decompress(self.decompressor.unconsumed_tail + data)
 
 
